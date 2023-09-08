@@ -183,7 +183,7 @@ int main(int argc, char* argv[]) {
     glm::vec3 translationVector(0.0f, 0.0f, 0.0f);
     float a = 45.0f;
     glm::vec3 rotationAxis(0.0f, 1.0f, 0.0f); // Rotate around the Y-axis
-    glm::vec3 scaleFactor(1.5f, 1.5f, 1.5f);
+    glm::vec3 scaleFactor(1.4f, 1.4f, 1.4f);
 
     glm::mat4 translation = glm::translate(glm::mat4(1.0f), translationVector);
 
