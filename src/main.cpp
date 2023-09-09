@@ -16,11 +16,15 @@
 #include "camera.h"
 #include "ObjLoader.h"
 #include "noise.h"
+#include "model.h"
 
 
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 Color currentColor;
+
+std::vector<Model> models;
+
 
 bool init() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -49,79 +53,71 @@ void setColor(const Color& color) {
     currentColor = color;
 }
 
-enum ShaderType {
-    GREENE,
-    GAS,
-    SUN,
-    LAND,
-    BALL,
-    NEON,
-    STARS
-};
 
-
-void render(const std::vector<glm::vec3>& VBO, const Uniforms& uniforms, ShaderType currentShader) {
-    // 1. Vertex Shader
-    std::vector<Vertex> transformedVertices(VBO.size() / 3);
-    for (size_t i = 0; i < VBO.size() / 3; ++i) {
-        Vertex vertex = { VBO[i * 3], VBO[i * 3 + 1], VBO[i * 3 + 2] };
-        transformedVertices[i] = vertexShader(vertex, uniforms);
-    }
-
-    // 2. Primitive Assembly
-    std::vector<std::vector<Vertex>> assembledVertices(transformedVertices.size() / 3);
-    for (size_t i = 0; i < transformedVertices.size() / 3; ++i) {
-        Vertex edge1 = transformedVertices[3 * i];
-        Vertex edge2 = transformedVertices[3 * i + 1];
-        Vertex edge3 = transformedVertices[3 * i + 2];
-        assembledVertices[i] = { edge1, edge2, edge3 };
-    }
-
-    // 3. Rasterization
-    std::vector<Fragment> fragments;
-
-    for (size_t i = 0; i < assembledVertices.size(); ++i) {
-        std::vector<Fragment> rasterizedTriangle = triangle(
-                assembledVertices[i][0],
-                assembledVertices[i][1],
-                assembledVertices[i][2]
-        );
-        fragments.insert(fragments.end(), rasterizedTriangle.begin(), rasterizedTriangle.end());
-    }
-
-    // 4. Fragment Shader
-    for (size_t i = 0; i < fragments.size(); ++i) {
-        Fragment (*fragmentShader)(Fragment&) = nullptr;
-
-        switch (currentShader) {
-            case GREENE:
-                fragmentShader = greeneShader;
-                break;
-            case GAS:
-                fragmentShader = gasShader; // Asumiendo que tienes una función llamada gasShader
-                break;
-            case SUN:
-                fragmentShader = sunShader; // Asumiendo que tienes una función llamada sunShader
-                break;
-            case LAND:
-                fragmentShader = landShader; // Asumiendo que tienes una función llamada landShader
-                break;
-            case BALL:
-                fragmentShader = ballShader; // Asumiendo que tienes una función llamada landShader
-                break;
-            case NEON:
-                fragmentShader = neonShader; // Asumiendo que tienes una función llamada landShader
-                break;
-            case STARS:
-                fragmentShader = starShaders; // Asumiendo que tienes una función llamada landShader
-                break;
-            default:
-                std::cerr << "Error: Shader no reconocido." << std::endl;
-                break;
+void render() {
+    for (const auto& model : models) {
+        // 1. Vertex Shader
+        std::vector<Vertex> transformedVertices(model.vertices.size() / 3);
+        for (size_t i = 0; i < model.vertices.size() / 3; ++i) {
+            Vertex vertex = {model.vertices[3 * i], model.vertices[3 * i + 1], model.vertices[3 * i + 2]};
+            transformedVertices[i] = vertexShader(vertex, model.uniforms);
         }
-        const Fragment& fragment = fragmentShader(fragments[i]);
 
-        point(fragment);
+        // 2. Primitive Assembly
+        std::vector<std::vector<Vertex>> assembledVertices(transformedVertices.size() / 3);
+        for (size_t i = 0; i < transformedVertices.size() / 3; ++i) {
+            Vertex edge1 = transformedVertices[3 * i];
+            Vertex edge2 = transformedVertices[3 * i + 1];
+            Vertex edge3 = transformedVertices[3 * i + 2];
+            assembledVertices[i] = {edge1, edge2, edge3};
+        }
+
+        // 3. Rasterization
+        std::vector<Fragment> fragments;
+
+        for (size_t i = 0; i < assembledVertices.size(); ++i) {
+            std::vector<Fragment> rasterizedTriangle = triangle(
+                    assembledVertices[i][0],
+                    assembledVertices[i][1],
+                    assembledVertices[i][2]
+            );
+            fragments.insert(fragments.end(), rasterizedTriangle.begin(), rasterizedTriangle.end());
+        }
+
+        // 4. Fragment Shader
+        for (size_t i = 0; i < fragments.size(); ++i) {
+            Fragment (*fragmentShader)(Fragment &) = nullptr;
+
+            switch (model.currentShader) {
+                case GREENE:
+                    fragmentShader = greeneShader;
+                    break;
+                case GAS:
+                    fragmentShader = gasShader; // Asumiendo que tienes una función llamada gasShader
+                    break;
+                case SUN:
+                    fragmentShader = sunShader; // Asumiendo que tienes una función llamada sunShader
+                    break;
+                case LAND:
+                    fragmentShader = landShader; // Asumiendo que tienes una función llamada landShader
+                    break;
+                case BALL:
+                    fragmentShader = ballShader; // Asumiendo que tienes una función llamada landShader
+                    break;
+                case NEON:
+                    fragmentShader = neonShader; // Asumiendo que tienes una función llamada landShader
+                    break;
+                case STARS:
+                    fragmentShader = starShaders; // Asumiendo que tienes una función llamada landShader
+                    break;
+                default:
+                    std::cerr << "Error: Shader no reconocido." << std::endl;
+                    break;
+            }
+            const Fragment &fragment = fragmentShader(fragments[i]);
+
+            point(fragment);
+        }
     }
 }
 
@@ -135,6 +131,28 @@ glm::mat4 createViewportMatrix(size_t screenWidth, size_t screenHeight) {
     viewport = glm::translate(viewport, glm::vec3(1.0f, 1.0f, 0.5f));
 
     return viewport;
+}
+
+void renderStars(int ox, int oy) {
+    /* std::fill(framebuffer.begin(), framebuffer.end(), blank); */
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+        for (int x = 0; x < SCREEN_WIDTH; x++) {
+            FastNoiseLite noiseGenerator;
+            noiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+
+            float scale = 1000.0f;
+            float noiseValue = noiseGenerator.GetNoise((x + (ox * 100.0f)) * scale, (y + oy * 100.0f) * scale);
+
+            // If the noise value is above a threshold, draw a star
+            if (noiseValue > 0.97f) {
+
+                framebuffer[y * SCREEN_WIDTH + x] = star;
+            } else {
+                framebuffer[y * SCREEN_WIDTH + x] = blank;
+            }
+        }
+    }
+
 }
 
 int main(int argc, char* argv[]) {
@@ -151,8 +169,7 @@ int main(int argc, char* argv[]) {
     std::vector<Face> faces;
     std::vector<glm::vec3> vertexBufferObject; // This will contain both vertices and normals
 
-    loadOBJ("/Users/jime/Uvgcoding/graphics/L4-GS/models/sphere.obj", vertices, normals, texCoords, faces);
-    /* loadTexture("models/diablo3.png"); */
+    loadOBJ("../models/sphere.obj", vertices, normals, texCoords, faces);
 
     for (const auto& face : faces)
     {
@@ -183,7 +200,7 @@ int main(int argc, char* argv[]) {
     glm::vec3 translationVector(0.0f, 0.0f, 0.0f);
     float a = 45.0f;
     glm::vec3 rotationAxis(0.0f, 1.0f, 0.0f); // Rotate around the Y-axis
-    glm::vec3 scaleFactor(1.4f, 1.4f, 1.4f);
+    glm::vec3 scaleFactor(1.0f, 1.0f, 1.0f);
 
     glm::mat4 translation = glm::translate(glm::mat4(1.0f), translationVector);
 
@@ -191,7 +208,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize a Camera object
     Camera camera;
-    camera.cameraPosition = glm::vec3(0.0f, 0.0f, 2.0f);
+    camera.cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
     camera.targetPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     camera.upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -202,22 +219,105 @@ int main(int argc, char* argv[]) {
     float farClip = 100.0f;
     uniforms.projection = glm::perspective(glm::radians(fovInDegrees), aspectRatio, nearClip, farClip);
 
+    // Viewport matrix
     uniforms.viewport = createViewportMatrix(SCREEN_WIDTH, SCREEN_HEIGHT);
     Uint32 frameStart, frameTime;
     std::string title = "FPS: ";
     int speed = 10;
 
+
     bool running = true;
     while (running) {
         frameStart = SDL_GetTicks();
+
+        models.clear(); // Clear models vector at the beginning of the loop
+
+        a += 1;
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(a), rotationAxis);
+
+        // Calculate the model matrix
+        uniforms.model = translation * rotation * scale;
+
+        // Create the view matrix using the Camera object
+        uniforms.view = glm::lookAt(
+                camera.cameraPosition, // The position of the camera
+                camera.targetPosition, // The point the camera is looking at
+                camera.upVector        // The up vector defining the camera's orientation
+        );
+
+        // Model 1
+        Model model1;
+        model1.modelMatrix = glm::mat4(1);
+        model1.vertices = vertexBufferObject;
+        model1.uniforms = uniforms;
+        model1.currentShader = SUN;
+        models.push_back(model1); // Add model1 to models vector
+
+        // Model 2: smaller and placed next to the first model
+        Model model2;
+        model2.modelMatrix = glm::mat4(1);
+        model2.vertices = vertexBufferObject;
+        model2.currentShader = GREENE;
+        model2.uniforms = uniforms;
+        model2.uniforms.model = glm::translate(model2.uniforms.model, glm::vec3(1.5f, 0.0f, 0.0f))
+                                * glm::scale(model2.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
+        models.push_back(model2); // Add model2 to models vector
+
+        // Model 3: smaller and placed next to the first model
+        Model model3;
+        model3.modelMatrix = glm::mat4(1);
+        model3.vertices = vertexBufferObject;
+        model3.currentShader = GAS;
+        model3.uniforms = uniforms;
+        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(-1.5f, 0.0f, 0.0f))
+                                * glm::scale(model3.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
+        models.push_back(model3); // Add model3 to models vector
+
+        // Model 3: smaller and placed next to the first model
+        Model model4;
+        model3.modelMatrix = glm::mat4(1);
+        model3.vertices = vertexBufferObject;
+        model3.currentShader = LAND;
+        model3.uniforms = uniforms;
+        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(-0.9f, 0.0f, 0.0f))
+                                * glm::scale(model3.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
+        models.push_back(model3); // Add model3 to models vector
+
+
+        // Model 3: smaller and placed next to the first model
+        Model model5;
+        model3.modelMatrix = glm::mat4(1);
+        model3.vertices = vertexBufferObject;
+        model3.currentShader = STARS;
+        model3.uniforms = uniforms;
+        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(-1.2f, 0.0f, 0.0f))
+                                * glm::scale(model3.uniforms.model, glm::vec3(0.1f, 0.1f, 0.1f));
+        models.push_back(model3); // Add model3 to models vector
+
+        Model model6;
+        model3.modelMatrix = glm::mat4(1);
+        model3.vertices = vertexBufferObject;
+        model3.currentShader = NEON;
+        model3.uniforms = uniforms;
+        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(1.2f, 0.0f, 0.0f))
+                                * glm::scale(model3.uniforms.model, glm::vec3(0.3f, 0.3f, 0.3f));
+        models.push_back(model3); // Add model3 to models vector
+
+        Model model7;
+        model3.modelMatrix = glm::mat4(1);
+        model3.vertices = vertexBufferObject;
+        model3.currentShader = BALL;
+        model3.uniforms = uniforms;
+        model3.uniforms.model =  glm::translate(model3.uniforms.model, glm::vec3(0.9f, 0.0f, 0.0f))
+                                 * glm::scale(model3.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
+        models.push_back(model3); // Add model3 to models vector
+
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
-            // Renderizar la tierra
-            render(vertexBufferObject, uniforms, currentShader);
 
             if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
@@ -241,26 +341,13 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        a += 1;
-        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(a), rotationAxis);
-
-        // Calculate the model matrix
-        uniforms.model = translation * rotation * scale;
-
-
-        // Create the view matrix using the Camera object
-        uniforms.view = glm::lookAt(
-                camera.cameraPosition, // The position of the camera
-                camera.targetPosition, // The point the camera is looking at
-                camera.upVector        // The up vector defining the camera's orientation
-        );
-
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        clearFramebuffer();
 
-        render(vertexBufferObject, uniforms, currentShader);
+        //x y y de a donde esta viendo la camara
+        renderStars(camera.cameraPosition.x, camera.cameraPosition.y);
 
+        render();
 
         renderBuffer(renderer);
 
@@ -273,7 +360,6 @@ int main(int argc, char* argv[]) {
             SDL_SetWindowTitle(window, titleStream.str().c_str());
         }
     }
-
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

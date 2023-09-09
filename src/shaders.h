@@ -143,7 +143,13 @@ Fragment sunShader (Fragment& fragment){
     glm::vec3 secondColor = glm::vec3(238.0f/255.0f, 186.0f/255.0f, 11.0f/255.0f);
     glm::vec3 thirdColor = glm::vec3(195.0f/255.0f, 111.0f/255.0f, 9.0f/255.0f);
 
-    glm::vec2 uv = glm::vec2(fragment.originalPos.x * 2.0 - 1.0 , fragment.originalPos.y * 2.0 - 1.0);
+    // Convert 3D position on sphere to 2D UV
+    glm::vec3 pos = glm::normalize(fragment.originalPos);
+    float u = 0.5f + atan2(pos.z, pos.x) / (4.0f * glm::pi<float>());
+    float v = 0.5f - asin(pos.y) / glm::pi<float>();
+    glm::vec2 uv = glm::vec2(u, v);
+
+    uv = glm::clamp(uv, 0.0f, 1.0f);
 
 
     FastNoiseLite noiseGenerator;
@@ -391,32 +397,33 @@ Fragment starShaders(Fragment& fragment){
 
     glm::vec3 secondColor = glm::vec3(0.0f/255.0f, 0.0f/255.0f, 0.0f/255.0f);
     glm::vec3 mainColor = glm::vec3(255.0f/255.0f, 255.0f/255.0f, 255.0f/255.0f);
+    fragment.intensity = 0.08f;
 
     glm::vec2 uv = glm::vec2(fragment.originalPos.x * 2.0 - 1.0 , fragment.originalPos.y * 2.0 - 1.0);
 
     FastNoiseLite noiseGenerator;
-    noiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    noiseGenerator.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
 
-    float offsetX = 8000.0f;
-    float offsetY = 1000.0f;
-    float scale = 30000.0f;
+    float offsetX = 100.0f;
+    float offsetY = 500.0f;
+    float scale = 50000.0f;
 
     // Genera el valor de ruido
     float noiseValue = noiseGenerator.GetNoise((uv.x + offsetX) * scale, (uv.y + offsetY) * scale);
     noiseValue = (noiseValue + 1.0f) * 0.9f;
 
+    if(noiseValue > 0.5f){
+        fragment.intensity = 1.0f;
+        color = Color(mainColor.x, mainColor.y, mainColor.z);
+        fragment.color = color * fragment.intensity;
+    }else if (noiseValue > 0.4f){
+        fragment.intensity = 0.2f;
+        color = Color(mainColor.x, mainColor.y, mainColor.z);
+        fragment.color = color * fragment.intensity;
+    }
+
     // Interpola entre el color base y el color secundario basado en el valor de ruido
     secondColor = glm::mix(mainColor, secondColor, noiseValue);
-
-    if (noiseValue > 0.99f){
-        // Calcula el valor sinusoide para crear líneas
-        float sinValue = glm::sin(uv.y * 20.0f) * 0.1f;
-
-        sinValue = glm::smoothstep(0.8f, 1.0f, sinValue);
-
-        // Combina el color base con las líneas sinusoide
-        secondColor = secondColor + glm::vec3 (sinValue);
-    }
 
 
     // Interpola entre el color base y el color secundario basado en el valor de ruido
@@ -427,7 +434,7 @@ Fragment starShaders(Fragment& fragment){
 
     color = Color(secondColor.x, secondColor.y, secondColor.z);
 
-    fragment.color = color;
+    fragment.color = color * fragment.intensity;
 
     return fragment;
 }

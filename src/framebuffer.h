@@ -7,7 +7,7 @@
 #include "color.h"  // Include your Color class header
 #include "fragment.h"
 
-constexpr size_t SCREEN_WIDTH = 800;
+constexpr size_t SCREEN_WIDTH = 900;
 constexpr size_t SCREEN_HEIGHT = 600;
 
 FragColor blank{
@@ -15,14 +15,19 @@ FragColor blank{
   std::numeric_limits<double>::max()
 };
 
+FragColor star{
+        Color{255, 255, 255},
+        std::numeric_limits<double>::max()
+};
+
 std::array<FragColor, SCREEN_WIDTH * SCREEN_HEIGHT> framebuffer;
 
 // Create a 2D array of mutexes
-std::array<std::mutex, SCREEN_WIDTH * SCREEN_HEIGHT> mutexes;
 
 void point(Fragment f) {
-    std::lock_guard<std::mutex> lock(mutexes[f.y * SCREEN_WIDTH + f.x]);
-
+    if (f.x < 0 || f.x >= SCREEN_WIDTH || f.y < 0 || f.y >= SCREEN_HEIGHT) {
+        return;
+    }
     if (f.z < framebuffer[f.y * SCREEN_WIDTH + f.x].z) {
        framebuffer[f.y * SCREEN_WIDTH + f.x] = FragColor{f.color, f.z};
     }
