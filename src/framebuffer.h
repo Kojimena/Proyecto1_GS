@@ -7,7 +7,7 @@
 #include "color.h"  // Include your Color class header
 #include "fragment.h"
 
-constexpr size_t SCREEN_WIDTH = 900;
+constexpr size_t SCREEN_WIDTH = 1200;
 constexpr size_t SCREEN_HEIGHT = 600;
 
 FragColor blank{
@@ -17,6 +17,11 @@ FragColor blank{
 
 FragColor star{
         Color{255, 255, 255},
+        std::numeric_limits<double>::max()
+};
+
+FragColor star2{
+        Color{230, 227, 227},
         std::numeric_limits<double>::max()
 };
 

@@ -16,6 +16,7 @@ class Model {
     public:
     glm::mat4 modelMatrix;
     std::vector<glm::vec3> vertices;
-    Uniforms uniforms;
     ShaderType currentShader;
+    float rotationSpeed;
+    float degrees = 0;
 };

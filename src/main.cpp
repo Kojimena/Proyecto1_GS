@@ -24,6 +24,8 @@ SDL_Renderer* renderer = nullptr;
 Color currentColor;
 
 std::vector<Model> models;
+Uniforms uniforms;
+
 
 
 bool init() {
@@ -55,12 +57,14 @@ void setColor(const Color& color) {
 
 
 void render() {
+    std::cout << "Rendering " << models.size() << " models" << std::endl;
     for (const auto& model : models) {
         // 1. Vertex Shader
+        uniforms.model = model.modelMatrix;
         std::vector<Vertex> transformedVertices(model.vertices.size() / 3);
         for (size_t i = 0; i < model.vertices.size() / 3; ++i) {
             Vertex vertex = {model.vertices[3 * i], model.vertices[3 * i + 1], model.vertices[3 * i + 2]};
-            transformedVertices[i] = vertexShader(vertex, model.uniforms);
+            transformedVertices[i] = vertexShader(vertex, uniforms);
         }
 
         // 2. Primitive Assembly
@@ -134,7 +138,6 @@ glm::mat4 createViewportMatrix(size_t screenWidth, size_t screenHeight) {
 }
 
 void renderStars(int ox, int oy) {
-    /* std::fill(framebuffer.begin(), framebuffer.end(), blank); */
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             FastNoiseLite noiseGenerator;
@@ -145,9 +148,9 @@ void renderStars(int ox, int oy) {
 
             // If the noise value is above a threshold, draw a star
             if (noiseValue > 0.97f) {
-
                 framebuffer[y * SCREEN_WIDTH + x] = star;
-            } else {
+            }
+            else{
                 framebuffer[y * SCREEN_WIDTH + x] = blank;
             }
         }
@@ -155,13 +158,7 @@ void renderStars(int ox, int oy) {
 
 }
 
-int main(int argc, char* argv[]) {
-
-    ShaderType currentShader = GREENE;
-
-    if (!init()) {
-        return 1;
-    }
+std::vector<glm::vec3> createVBO(std::string path) {
 
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
@@ -169,7 +166,7 @@ int main(int argc, char* argv[]) {
     std::vector<Face> faces;
     std::vector<glm::vec3> vertexBufferObject; // This will contain both vertices and normals
 
-    loadOBJ("../models/sphere.obj", vertices, normals, texCoords, faces);
+    loadOBJ(path.c_str(), vertices, normals, texCoords, faces);
 
     for (const auto& face : faces)
     {
@@ -191,14 +188,27 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    Uniforms uniforms;
+    return vertexBufferObject;
+}
+
+int main(int argc, char* argv[]) {
+
+    ShaderType currentShader = GREENE;
+
+    if (!init()) {
+        return 1;
+    }
+
+    std::vector<glm::vec3> vertexBufferObject = createVBO("../models/sphere.obj");
+    std::vector<glm::vec3> vBoSpaceship = createVBO("../models/navejime.obj");
+
 
     glm::mat4 model = glm::mat4(1);
     glm::mat4 view = glm::mat4(1);
     glm::mat4 projection = glm::mat4(1);
 
     glm::vec3 translationVector(0.0f, 0.0f, 0.0f);
-    float a = 45.0f;
+    //float a = 45.0f;
     glm::vec3 rotationAxis(0.0f, 1.0f, 0.0f); // Rotate around the Y-axis
     glm::vec3 scaleFactor(1.0f, 1.0f, 1.0f);
 
@@ -227,16 +237,78 @@ int main(int argc, char* argv[]) {
 
 
     bool running = true;
+    // Model 1
+    Model model1;
+    model1.modelMatrix = glm::mat4(1);
+    model1.vertices = vertexBufferObject;
+    model1.rotationSpeed = 4.0f;
+    model1.degrees = 45.0f;
+    model1.currentShader = SUN;
+    models.push_back(model1); // Add model1 to models vector
+
+    // Model 2:
+    Model model2;
+    model2.modelMatrix = glm::mat4(1);
+    model2.vertices = vertexBufferObject;
+    model2.currentShader = GREENE;
+    model2.rotationSpeed = 20.0f;
+    models.push_back(model2); // Add model2 to models vector
+
+    // Model 3:
+    Model model3;
+    model3.modelMatrix = glm::mat4(1);
+    model3.vertices = vertexBufferObject;
+    model3.currentShader = GAS;
+    model3.rotationSpeed = 2.0f;
+    models.push_back(model3); // Add model3 to models vector
+
+    // Model 4:
+    Model model4;
+    model4.modelMatrix = glm::mat4(1);
+    model4.vertices = vertexBufferObject;
+    model4.currentShader = LAND;
+    model4.rotationSpeed = 1.0f;
+    models.push_back(model4); // Add model3 to models vector
+
+
+    // Model 5:
+    Model model5;
+    model5.modelMatrix = glm::mat4(1);
+    model5.vertices = vertexBufferObject;
+    model5.currentShader = STARS;
+    model5.rotationSpeed = 8.0f;
+    models.push_back(model5); // Add model3 to models vector
+
+    Model model6;
+    model6.modelMatrix = glm::mat4(1);
+    model6.vertices = vertexBufferObject;
+    model6.currentShader = NEON;
+    model6.rotationSpeed = 3.0f;
+    models.push_back(model6); // Add model3 to models vector
+
+    Model model7;
+    model7.modelMatrix = glm::mat4(1);
+    model7.vertices = vertexBufferObject;
+    model7.currentShader = BALL;
+    model7.rotationSpeed = 3.0f;
+    model7.degrees = 15.0f;
+    models.push_back(model7); // Add model3 to models vector
+
+    Model nave;
+    nave.modelMatrix = glm::mat4(1);
+    nave.vertices = vBoSpaceship;
+    nave.currentShader = GREENE;
+    models.push_back(nave); // Add model3 to models vector
+
     while (running) {
         frameStart = SDL_GetTicks();
 
-        models.clear(); // Clear models vector at the beginning of the loop
-
-        a += 1;
-        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(a), rotationAxis);
+        //a += 1;
+        //glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(a), rotationAxis);
 
         // Calculate the model matrix
-        uniforms.model = translation * rotation * scale;
+        uniforms.model = translation  * scale;
+
 
         // Create the view matrix using the Camera object
         uniforms.view = glm::lookAt(
@@ -245,72 +317,31 @@ int main(int argc, char* argv[]) {
                 camera.upVector        // The up vector defining the camera's orientation
         );
 
-        // Model 1
-        Model model1;
-        model1.modelMatrix = glm::mat4(1);
-        model1.vertices = vertexBufferObject;
-        model1.uniforms = uniforms;
-        model1.currentShader = SUN;
-        models.push_back(model1); // Add model1 to models vector
-
-        // Model 2: smaller and placed next to the first model
-        Model model2;
-        model2.modelMatrix = glm::mat4(1);
-        model2.vertices = vertexBufferObject;
-        model2.currentShader = GREENE;
-        model2.uniforms = uniforms;
-        model2.uniforms.model = glm::translate(model2.uniforms.model, glm::vec3(1.5f, 0.0f, 0.0f))
-                                * glm::scale(model2.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
-        models.push_back(model2); // Add model2 to models vector
-
-        // Model 3: smaller and placed next to the first model
-        Model model3;
-        model3.modelMatrix = glm::mat4(1);
-        model3.vertices = vertexBufferObject;
-        model3.currentShader = GAS;
-        model3.uniforms = uniforms;
-        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(-1.5f, 0.0f, 0.0f))
-                                * glm::scale(model3.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
-        models.push_back(model3); // Add model3 to models vector
-
-        // Model 3: smaller and placed next to the first model
-        Model model4;
-        model3.modelMatrix = glm::mat4(1);
-        model3.vertices = vertexBufferObject;
-        model3.currentShader = LAND;
-        model3.uniforms = uniforms;
-        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(-0.9f, 0.0f, 0.0f))
-                                * glm::scale(model3.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
-        models.push_back(model3); // Add model3 to models vector
+        //actualización de los modelos
+        model1.modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(model1.degrees += model1.rotationSpeed), rotationAxis);
+        models.at(1).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 0.0f, 0.0f))
+                             * glm::rotate(glm::mat4(1.0f), glm::radians( model2.degrees += model2.rotationSpeed), rotationAxis)
+                             * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+        models.at(2).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f))
+                             * glm::rotate(glm::mat4(1.0f), glm::radians( model3.degrees += model3.rotationSpeed), rotationAxis)
+                             * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+        models.at(3).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-0.9f, 0.0f, 0.0f))
+                             * glm::rotate(glm::mat4(1.0f), glm::radians(model4.degrees += model4.rotationSpeed), rotationAxis)
+                             * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+        models.at(4).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.2f, 0.0f, 0.0f))
+                             * glm::rotate(glm::mat4(1.0f), glm::radians(model5.degrees += model5.rotationSpeed), rotationAxis)
+                             * glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+        models.at(5).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.2f, 0.0f, 0.0f))
+                                * glm::rotate(glm::mat4(1.0f), glm::radians(model6.degrees+= model6.rotationSpeed), rotationAxis)
+                                * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 0.3f));
+        models.at(6).modelMatrix =  glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f))
+                                 * glm::rotate(glm::mat4(1.0f), glm::radians(model7.degrees+= model7.rotationSpeed), rotationAxis)
+                                 * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+        models.at(7).modelMatrix =  glm::translate(glm::mat4 (1), glm::vec3(-1.9f, 0.0f, 0.0f))
+                            * glm::scale(glm::mat4 (1), glm::vec3(0.01f, 0.01f, 0.01f));
 
 
-        // Model 3: smaller and placed next to the first model
-        Model model5;
-        model3.modelMatrix = glm::mat4(1);
-        model3.vertices = vertexBufferObject;
-        model3.currentShader = STARS;
-        model3.uniforms = uniforms;
-        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(-1.2f, 0.0f, 0.0f))
-                                * glm::scale(model3.uniforms.model, glm::vec3(0.1f, 0.1f, 0.1f));
-        models.push_back(model3); // Add model3 to models vector
 
-        Model model6;
-        model3.modelMatrix = glm::mat4(1);
-        model3.vertices = vertexBufferObject;
-        model3.currentShader = NEON;
-        model3.uniforms = uniforms;
-        model3.uniforms.model = glm::translate(model3.uniforms.model, glm::vec3(1.2f, 0.0f, 0.0f))
-                                * glm::scale(model3.uniforms.model, glm::vec3(0.3f, 0.3f, 0.3f));
-        models.push_back(model3); // Add model3 to models vector
-
-        Model model7;
-        model3.modelMatrix = glm::mat4(1);
-        model3.vertices = vertexBufferObject;
-        model3.currentShader = BALL;
-        model3.uniforms = uniforms;
-        model3.uniforms.model =  glm::translate(model3.uniforms.model, glm::vec3(0.9f, 0.0f, 0.0f))
-                                 * glm::scale(model3.uniforms.model, glm::vec3(0.2f, 0.2f, 0.2f));
-        models.push_back(model3); // Add model3 to models vector
 
 
         SDL_Event event;
