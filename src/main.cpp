@@ -383,7 +383,7 @@ int main(int argc, char* argv[]) {
         models.at(6).degreesRotation += model7.translationSpeed;
 
 
-        models.at(7).modelMatrix =  glm::translate(glm::mat4 (1), glm::vec3(-1.9f, 0.0f, 0.0f))
+        models.at(7).modelMatrix =  glm::translate(glm::mat4 (1), glm::vec3(camera.cameraPosition.x, camera.cameraPosition.y, 1.5f))
                             * glm::scale(glm::mat4 (1), glm::vec3(0.01f, 0.01f, 0.01f));
 
 
@@ -398,10 +398,6 @@ int main(int argc, char* argv[]) {
 
             if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
-                    case SDLK_SPACE:
-                        currentShader = static_cast<ShaderType>((currentShader + 1) % 7);
-                        std::cout << "Shader: " << currentShader << std::endl;
-                        break;
                     case SDLK_LEFT:
                         camera.cameraPosition.x += -speed;
                         camera.targetPosition.x += -speed;
