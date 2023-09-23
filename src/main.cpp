@@ -233,7 +233,7 @@ int main(int argc, char* argv[]) {
     uniforms.viewport = createViewportMatrix(SCREEN_WIDTH, SCREEN_HEIGHT);
     Uint32 frameStart, frameTime;
     std::string title = "FPS: ";
-    int speed = 10;
+    float speed = 0.5f;
 
 
     bool running = true;
@@ -241,8 +241,7 @@ int main(int argc, char* argv[]) {
     Model model1;
     model1.modelMatrix = glm::mat4(1);
     model1.vertices = vertexBufferObject;
-    model1.rotationSpeed = 4.0f;
-    model1.degrees = 45.0f;
+    model1.rotationSpeed = 1.0f;
     model1.currentShader = SUN;
     models.push_back(model1); // Add model1 to models vector
 
@@ -250,14 +249,20 @@ int main(int argc, char* argv[]) {
     Model model2;
     model2.modelMatrix = glm::mat4(1);
     model2.vertices = vertexBufferObject;
+    model2.degreesRotation = 45.0f; //grados de mi rotación
+    model2.radius = 1.5f;//radio de alejamiennto a sol
     model2.currentShader = GREENE;
     model2.rotationSpeed = 20.0f;
+    model2.translationSpeed = 0.001f; //velocidad de traslación
     models.push_back(model2); // Add model2 to models vector
 
     // Model 3:
     Model model3;
     model3.modelMatrix = glm::mat4(1);
     model3.vertices = vertexBufferObject;
+    model3.degreesRotation = 10.0f; //grados de mi rotación
+    model3.radius = 1.2f;//radio de alejamiennto a sol
+    model3.translationSpeed = 0.005f; //velocidad de traslación
     model3.currentShader = GAS;
     model3.rotationSpeed = 2.0f;
     models.push_back(model3); // Add model3 to models vector
@@ -267,7 +272,10 @@ int main(int argc, char* argv[]) {
     model4.modelMatrix = glm::mat4(1);
     model4.vertices = vertexBufferObject;
     model4.currentShader = LAND;
-    model4.rotationSpeed = 1.0f;
+    model4.degreesRotation = 15.0f; //grados de mi rotación
+    model4.radius = 0.9f;//radio de alejamiennto a sol
+    model4.translationSpeed = 0.009f; //velocidad de traslación
+    model4.rotationSpeed = 2.0f;
     models.push_back(model4); // Add model3 to models vector
 
 
@@ -277,6 +285,9 @@ int main(int argc, char* argv[]) {
     model5.vertices = vertexBufferObject;
     model5.currentShader = STARS;
     model5.rotationSpeed = 8.0f;
+    model5.degreesRotation = 25.0f; //grados de mi rotación
+    model5.radius = 1.4f;//radio de alejamiennto a sol
+    model5.translationSpeed = 0.009f; //velocidad de traslación
     models.push_back(model5); // Add model3 to models vector
 
     Model model6;
@@ -284,6 +295,9 @@ int main(int argc, char* argv[]) {
     model6.vertices = vertexBufferObject;
     model6.currentShader = NEON;
     model6.rotationSpeed = 3.0f;
+    model6.degreesRotation = 20.0f; //grados de mi rotación
+    model6.radius = 1.6f;//radio de alejamiennto a sol
+    model6.translationSpeed = 0.009f; //velocidad de traslación
     models.push_back(model6); // Add model3 to models vector
 
     Model model7;
@@ -291,7 +305,10 @@ int main(int argc, char* argv[]) {
     model7.vertices = vertexBufferObject;
     model7.currentShader = BALL;
     model7.rotationSpeed = 3.0f;
-    model7.degrees = 15.0f;
+    model7.degrees = 45.0f;
+    model7.degreesRotation = 0.0f; //grados de mi rotación
+    model7.radius = 0.9f;//radio de alejamiennto a sol
+    model7.translationSpeed = 0.009f; //velocidad de traslación
     models.push_back(model7); // Add model3 to models vector
 
     Model nave;
@@ -302,9 +319,6 @@ int main(int argc, char* argv[]) {
 
     while (running) {
         frameStart = SDL_GetTicks();
-
-        //a += 1;
-        //glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(a), rotationAxis);
 
         // Calculate the model matrix
         uniforms.model = translation  * scale;
@@ -318,25 +332,57 @@ int main(int argc, char* argv[]) {
         );
 
         //actualización de los modelos
-        model1.modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(model1.degrees += model1.rotationSpeed), rotationAxis);
-        models.at(1).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 0.0f, 0.0f))
+        models.at(0).modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(model1.degrees += model1.rotationSpeed), rotationAxis);
+        models.at(1).modelMatrix = glm::translate(glm::mat4(1.0f),
+                                                  glm::vec3(models.at(1).radius* glm::cos(models.at(1).degreesRotation),
+                                                            0.0f,
+                                                            models.at(1).radius* glm::sin(models.at(1).degreesRotation)))
                              * glm::rotate(glm::mat4(1.0f), glm::radians( model2.degrees += model2.rotationSpeed), rotationAxis)
                              * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
-        models.at(2).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f))
+        models.at(1).degreesRotation += model2.translationSpeed;
+
+        models.at(2).modelMatrix = glm::translate(glm::mat4(1.0f),
+                                                  glm::vec3(models.at(2).radius* glm::cos(models.at(2).degreesRotation),
+                                                            0.0f,
+                                                            models.at(2).radius* glm::sin(models.at(2).degreesRotation)))
                              * glm::rotate(glm::mat4(1.0f), glm::radians( model3.degrees += model3.rotationSpeed), rotationAxis)
                              * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
-        models.at(3).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-0.9f, 0.0f, 0.0f))
+        models.at(2).degreesRotation += model3.translationSpeed;
+
+        models.at(3).modelMatrix = glm::translate(glm::mat4(1.0f),
+                                                  glm::vec3(models.at(3).radius* glm::cos(models.at(3).degreesRotation),
+                                                            0.0f,
+                                                            models.at(3).radius* glm::sin(models.at(3).degreesRotation)))
                              * glm::rotate(glm::mat4(1.0f), glm::radians(model4.degrees += model4.rotationSpeed), rotationAxis)
                              * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
-        models.at(4).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.2f, 0.0f, 0.0f))
+        models.at(3).degreesRotation += model4.translationSpeed;
+
+        models.at(4).modelMatrix = glm::translate(glm::mat4(1.0f),
+                                                    glm::vec3(models.at(4).radius* glm::cos(models.at(4).degreesRotation),
+                                                                0.0f,
+                                                                models.at(4).radius* glm::sin(models.at(4).degreesRotation)))
                              * glm::rotate(glm::mat4(1.0f), glm::radians(model5.degrees += model5.rotationSpeed), rotationAxis)
                              * glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-        models.at(5).modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.2f, 0.0f, 0.0f))
+        models.at(4).degreesRotation += model5.translationSpeed;
+
+
+        models.at(5).modelMatrix = glm::translate(glm::mat4(1.0f),
+                                                    glm::vec3(models.at(5).radius* glm::cos(models.at(5).degreesRotation),
+                                                                0.0f,
+                                                                models.at(5).radius* glm::sin(models.at(5).degreesRotation)))
                                 * glm::rotate(glm::mat4(1.0f), glm::radians(model6.degrees+= model6.rotationSpeed), rotationAxis)
                                 * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 0.3f));
-        models.at(6).modelMatrix =  glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f))
+        models.at(5).degreesRotation += model6.translationSpeed;
+
+        models.at(6).modelMatrix =  glm::translate(glm::mat4(1.0f),
+                                                    glm::vec3(models.at(6).radius* glm::cos(models.at(6).degreesRotation),
+                                                                0.0f,
+                                                                models.at(6).radius* glm::sin(models.at(6).degreesRotation)))
                                  * glm::rotate(glm::mat4(1.0f), glm::radians(model7.degrees+= model7.rotationSpeed), rotationAxis)
                                  * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+        models.at(6).degreesRotation += model7.translationSpeed;
+
+
         models.at(7).modelMatrix =  glm::translate(glm::mat4 (1), glm::vec3(-1.9f, 0.0f, 0.0f))
                             * glm::scale(glm::mat4 (1), glm::vec3(0.01f, 0.01f, 0.01f));
 
@@ -358,15 +404,37 @@ int main(int argc, char* argv[]) {
                         break;
                     case SDLK_LEFT:
                         camera.cameraPosition.x += -speed;
+                        camera.targetPosition.x += -speed;
                         break;
                     case SDLK_RIGHT:
                         camera.cameraPosition.x += speed;
+                        camera.targetPosition.x += speed;
+
                         break;
                     case SDLK_UP:
-                        camera.cameraPosition.y += -speed;
+                        camera.cameraPosition.y += speed;
+                        camera.targetPosition.y += speed;
                         break;
                     case SDLK_DOWN:
-                        camera.cameraPosition.y += speed;
+                        camera.cameraPosition.y += -speed;
+                        camera.targetPosition.y += -speed;
+                        break;
+                    case SDLK_w:
+                        camera.cameraPosition.z += -speed;
+                        camera.targetPosition.z += -speed;
+                        break;
+                    case SDLK_a:
+                        //cambiar el angulo de la camara para que gire
+                        //camera.cameraPosition.z += speed;
+                        camera.targetPosition.y += speed;
+                        break;
+                    case SDLK_d:
+                        //camera.cameraPosition.z += -speed;
+                        camera.targetPosition.y += -speed;
+                        break;
+                    case SDLK_s:
+                        camera.cameraPosition.z += speed;
+                        camera.targetPosition.z += speed;
                         break;
                 }
             }

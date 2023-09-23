@@ -19,4 +19,7 @@ class Model {
     ShaderType currentShader;
     float rotationSpeed;
     float degrees = 0;
+    float degreesRotation;
+    float radius;
+    float translationSpeed;
 };
