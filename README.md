@@ -6,6 +6,15 @@
 
 Mira el sistema solar en acción en este [video](INSERTA_LINK_AQUÍ).
 
+## Puntos cumplidos
+
+- [Criterio Subjetivo] 30 Puntos por la estética de su sistema completo
+- [Criterio Subjetivo] 20 Puntos por el performance de la escena completa. No es necesario mantener 60 frames por segundo, es suficiente con que se sienta apropiado.
+- [5 planetas] 10 Puntos por cada planeta / estrella / luna en el sistema. Para un máximo de 50 puntos.
+- 30 Puntos por renderizar una nave modelada por ustedes que siga a su cámara
+- 10 puntos por crear un skybox que muestre estrellas en el horizonte
+- 40 puntos por implementar movimiento 3D para la cámara
+
 ## Características
 
 - Uso de la librería SDL2 para la creación de ventanas y manejo de eventos.
