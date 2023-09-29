@@ -395,7 +395,7 @@ Fragment ballShader(Fragment& fragment){
 Fragment starShaders(Fragment& fragment){
     Color color;
 
-    glm::vec3 secondColor = glm::vec3(0.0f/255.0f, 0.0f/255.0f, 0.0f/255.0f);
+    glm::vec3 secondColor = glm::vec3(133.0f/255.0f, 50.0f/255.0f, 168.0f/255.0f);
     glm::vec3 mainColor = glm::vec3(255.0f/255.0f, 255.0f/255.0f, 255.0f/255.0f);
     fragment.intensity = 0.08f;
 
@@ -412,12 +412,8 @@ Fragment starShaders(Fragment& fragment){
     float noiseValue = noiseGenerator.GetNoise((uv.x + offsetX) * scale, (uv.y + offsetY) * scale);
     noiseValue = (noiseValue + 1.0f) * 0.9f;
 
-    if(noiseValue > 0.5f){
+    if(noiseValue > 0.1f){
         fragment.intensity = 1.0f;
-        color = Color(mainColor.x, mainColor.y, mainColor.z);
-        fragment.color = color * fragment.intensity;
-    }else if (noiseValue > 0.4f){
-        fragment.intensity = 0.2f;
         color = Color(mainColor.x, mainColor.y, mainColor.z);
         fragment.color = color * fragment.intensity;
     }
